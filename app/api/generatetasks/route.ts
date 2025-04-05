@@ -12,8 +12,9 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient();
 
-    // Get input from request
-    const { input } = await req.json();
+    // Get input from form submission
+    const formData = await req.formData();
+    const input = formData.get("input")?.toString() ?? "";
     console.log("Received input:", input);
 
     if (!input || typeof input !== "string") {
@@ -78,9 +79,19 @@ Example response format:
     }
 
     // Step 2: Insert the Loop into Supabase
+    const {
+      data: { user },
+      error: userError
+    } = await supabase.auth.getUser()
+
+    if (userError || !user) {
+      console.error("User fetch error:", userError)
+      return NextResponse.json({ error: "User not authenticated" }, { status: 401 })
+    }
+
     const { data: loop, error: loopError } = await supabase
       .from("loopz")
-      .insert([{ title: input }])
+      .insert([{ title: input, user_id: user.id }])
       .select()
       .single();
 
@@ -99,10 +110,9 @@ Example response format:
       completed: false,
     }));
 
-    const { data: insertedSteps, error: stepError } = await supabase
+    const { error: stepError } = await supabase
       .from("steps")
-      .insert(stepPayload)
-      .select();
+      .insert(stepPayload);
 
     if (stepError) {
       console.error("Step insert error:", stepError);
@@ -110,7 +120,8 @@ Example response format:
     }
 
     console.log("Steps inserted successfully");
-    return NextResponse.json({ loopId: loop.id, steps: insertedSteps });
+    const baseUrl = req.nextUrl.origin;
+    return NextResponse.redirect(`${baseUrl}/loopz/${loop.id}`, { status: 303 });
   } catch (error) {
     console.error("Unexpected error:", error);
     return NextResponse.json(
