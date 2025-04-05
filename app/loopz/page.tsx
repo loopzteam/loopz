@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
+
+// ShadCN UI components
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 export default function LoopzListPage() {
   const [loopz, setLoopz] = useState<any[]>([]);
@@ -42,7 +48,7 @@ export default function LoopzListPage() {
 
     if (data?.loopId) {
       setInput("");
-      await fetchLoopz(); // refresh list
+      await fetchLoopz();
       router.push(`/loopz/${data.loopId}`);
     } else {
       alert(data?.error || "Something went wrong.");
@@ -52,11 +58,11 @@ export default function LoopzListPage() {
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto space-y-4">
-      <h1 className="text-2xl font-bold">Open Loopz</h1>
+    <div className="p-6 max-w-2xl mx-auto space-y-6">
+      <h1 className="text-3xl font-bold mb-4">Open Loopz</h1>
 
       {loopz.length === 0 ? (
-        <p>No loopz yet.</p>
+        <p className="text-muted-foreground">No loopz yet.</p>
       ) : (
         loopz.map((loop) => {
           const steps = loop.steps || [];
@@ -65,44 +71,41 @@ export default function LoopzListPage() {
           const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
           return (
-            <div
+            <Card
               key={loop.id}
-              className="border p-4 rounded cursor-pointer mb-4"
+              className="cursor-pointer hover:shadow-md transition"
               onClick={() => router.push(`/loopz/${loop.id}`)}
             >
-              <h2 className="text-lg font-medium">{loop.title}</h2>
-              <p className="text-sm text-gray-500">
-                {format(new Date(loop.created_at), "MMM d")}
-              </p>
-              <div className="h-2 bg-gray-200 rounded mt-2">
-                <div
-                  className="h-full bg-indigo-500 rounded"
-                  style={{ width: `${percent}%` }}
-                />
-              </div>
-              <p className="text-sm text-gray-500 mt-1">{percent}% complete</p>
-            </div>
+              <CardHeader>
+                <CardTitle className="truncate">{loop.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-muted-foreground mb-2">
+                  {format(new Date(loop.created_at), "MMM d")}
+                </div>
+                <Progress value={percent} className="mb-2" />
+                <p className="text-sm text-muted-foreground">{percent}% complete</p>
+              </CardContent>
+            </Card>
           );
         })
       )}
 
-      <div className="pt-6 mt-8 border-t border-gray-200">
+      <div className="pt-6 mt-8 border-t border-border">
         <h2 className="text-xl font-semibold mb-2">What’s on your mind?</h2>
-        <textarea
-          className="w-full p-4 rounded border border-gray-300"
-          rows={3}
+        <Textarea
           placeholder="Enter your thought..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={loading}
         />
-        <button
+        <Button
           onClick={handleSubmit}
           disabled={loading}
-          className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+          className="mt-2"
         >
           {loading ? "Generating..." : "Get Clarity"}
-        </button>
+        </Button>
       </div>
     </div>
   );
