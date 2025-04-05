@@ -1,4 +1,3 @@
-// types/supabase.ts
 export type Json =
   | string
   | number
@@ -43,6 +42,37 @@ export interface Database {
             foreignKeyName: "loopz_user_id_fkey"
             columns: ["user_id"]
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      steps: {
+        Row: {
+          id: string
+          title: string
+          completed: boolean
+          loop_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          completed?: boolean
+          loop_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          completed?: boolean
+          loop_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "steps_loop_id_fkey"
+            columns: ["loop_id"]
+            referencedRelation: "loopz"
             referencedColumns: ["id"]
           }
         ]
