@@ -1,14 +1,25 @@
-import { supabase } from '@/types/supabase'
+import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
-  const { data: loopz, error } = await supabase.from('loopz').select('*')
+  const supabase = await createClient();
 
-  if (error) return <div>Supabase connection failed: {error.message}</div>
+  const { data: loopz, error } = await supabase
+    .from("loopz")
+    .select("*")
+    .limit(5); // example limit to keep output light
+
+  if (error) return <div className="p-4 text-red-500">Supabase connection failed: {error.message}</div>;
 
   return (
-    <div className="p-8">
-      <h1 className="text-xl font-bold">Loopz fetched from Supabase:</h1>
-      <pre>{JSON.stringify(loopz, null, 2)}</pre>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Recent Loopz</h1>
+      <ul className="space-y-2">
+        {loopz?.map((loop: any) => (
+          <li key={loop.id} className="border p-3 rounded">
+            {loop.title}
+          </li>
+        ))}
+      </ul>
     </div>
-  )
+  );
 }
