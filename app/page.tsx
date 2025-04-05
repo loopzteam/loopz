@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/types/supabase'
 
 export default async function Home() {
   const { data: loopz, error } = await supabase.from('loopz').select('*')

@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
@@ -6,6 +6,8 @@ export default async function LoopzDetailPage(props: {
   params: { id: string };
 }) {
   const { params } = props;
+
+  const supabase = await createClient();
 
   const { data: loop, error } = await supabase
     .from("loopz")
