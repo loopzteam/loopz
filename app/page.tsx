@@ -1,53 +1,29 @@
-'use client'
+import { createClient } from '@/lib/supabase/server'
 
-import { useEffect, useState } from 'react'
-import { useAuth } from '@/lib/auth-provider'
-import { createClient } from '@/lib/supabase/client'
+export default async function HomePage() {
+  const supabase = await createClient()
+  const {
+    data: { session }
+  } = await supabase.auth.getSession()
 
-export default function HomePage() {
-  const { user, loading: authLoading } = useAuth()
-  const [loopz, setLoopz] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchLoopz = async () => {
-      const supabase = createClient()
-      const { data, error } = await supabase.from('loopz').select('*').limit(5)
-      if (error) {
-        console.error('Error fetching loopz:', error)
-      } else {
-        setLoopz(data || [])
-      }
-      setLoading(false)
-    }
-
-    fetchLoopz()
-  }, [])
-
-  if (authLoading || loading) return <div className="p-4">Loading...</div>
+  const buttonHref = session ? '/dashboard' : '/login'
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Loopz Home</h1>
-
-      {user ? (
-        <p className="text-green-600 mb-4">✅ Logged in as {user.email}</p>
-      ) : (
-        <p className="text-gray-500 mb-4">Not logged in</p>
-      )}
-
-      <h2 className="text-xl font-semibold mb-2">Recent Loopz</h2>
-      {loopz.length === 0 ? (
-        <p className="text-muted-foreground">No loopz found.</p>
-      ) : (
-        <ul className="space-y-2">
-          {loopz.map((loop: any) => (
-            <li key={loop.id} className="border p-3 rounded">
-              {loop.title}
-            </li>
-          ))}
-        </ul>
-      )}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200">
+      <div className="text-center p-8 max-w-xl">
+        <h1 className="text-4xl font-bold mb-6 text-gray-800">
+          Untangle Your Mind
+        </h1>
+        <p className="mb-8 text-gray-600 text-lg">
+          Loopz is your space to slow down, process your thoughts, and take meaningful steps forward — one loop at a time.
+        </p>
+        <a
+          href={buttonHref}
+          className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded transition text-lg"
+        >
+          Untangle Your Mind →
+        </a>
+      </div>
     </div>
   )
 }
