@@ -1,15 +1,15 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { Session, User } from '@supabase/supabase-js'
+import { Session, User, AuthResponse } from '@supabase/supabase-js'
 import { getClientSupabase } from '@/lib/supabase/client'
 
 type AuthContextType = {
   user: User | null
   session: Session | null
   isLoading: boolean
-  signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string) => Promise<void>
+  signIn: (email: string, password: string) => Promise<AuthResponse['data']>
+  signUp: (email: string, password: string) => Promise<AuthResponse['data']>
   signOut: () => Promise<void>
   error: string | null
 }
@@ -60,12 +60,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true)
     setError(null)
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      })
+      
       if (error) throw error
+      
+      // Update user and session state
+      setSession(data.session)
+      setUser(data.user)
+      
+      return data
     } catch (error) {
       console.error('Error signing in:', error)
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'An unknown error occurred during sign in'
+      
       setError(errorMessage)
+      throw error
     } finally {
       setIsLoading(false)
     }
@@ -75,12 +89,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true)
     setError(null)
     try {
-      const { error } = await supabase.auth.signUp({ email, password })
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password, 
+        options: {
+          emailRedirectTo: window.location.origin + '/auth/callback',
+        }
+      })
+      
       if (error) throw error
+      
+      // Check if confirmation email was sent or if auto-confirmed
+      if (data.user?.identities?.length === 0) {
+        throw new Error('Email address is already registered')
+      }
+      
+      return data
     } catch (error) {
       console.error('Error signing up:', error)
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+      let errorMessage = error instanceof Error 
+        ? error.message 
+        : 'An unknown error occurred during sign up'
+        
+      // Provide more user-friendly error messages
+      if (errorMessage.includes('email already')) {
+        errorMessage = 'This email is already registered. Please sign in instead.'
+      }
+      
       setError(errorMessage)
+      throw error
     } finally {
       setIsLoading(false)
     }
@@ -91,10 +128,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
+      
+      // Clear user state
+      setUser(null)
+      setSession(null)
+      
+      // Redirect to home page or sign-in page after sign out
+      window.location.href = '/'
     } catch (error) {
       console.error('Error signing out:', error)
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'An unknown error occurred during sign out'
       setError(errorMessage)
+      throw error
     } finally {
       setIsLoading(false)
     }
